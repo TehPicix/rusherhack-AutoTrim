@@ -4,6 +4,7 @@ import net.minecraft.client.gui.screens.inventory.SmithingScreen;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.inventory.SmithingMenu;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.equipment.ArmorMaterials;
 import org.rusherhack.client.api.events.client.EventUpdate;
 import org.rusherhack.client.api.feature.module.ModuleCategory;
 import org.rusherhack.client.api.feature.module.ToggleableModule;
@@ -123,7 +124,14 @@ public class AutoNetherite extends ToggleableModule {
     private boolean isDiamondThing(ItemStack stack){
         boolean diamond = false;
 
-        if ((stack.getItem() instanceof ArmorItem item) && item.getMaterial().equals(ArmorMaterials.DIAMOND)) diamond = true;
+        if ((stack.getItem() instanceof ArmorItem) && ( // I DONT GIVE A FUCK I CBA TO LOOK AT THE NEW CODE FOR THIS
+                        stack.getItem() == Items.DIAMOND_HELMET ||
+                        stack.getItem() == Items.DIAMOND_CHESTPLATE ||
+                        stack.getItem() == Items.DIAMOND_LEGGINGS ||
+                        stack.getItem() == Items.DIAMOND_BOOTS
+        )) {
+            diamond = true;
+        }
 
         if (stack.getItem().equals(Items.DIAMOND_AXE)) diamond = true;
         if (stack.getItem().equals(Items.DIAMOND_HOE)) diamond = true;
