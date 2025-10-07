@@ -1,8 +1,10 @@
 plugins {
+	id 'idea'
+	id 'java'
 	id 'fabric-loom' version '1.9-SNAPSHOT'
+	id 'maven-publish'
 }
 
-// version = project.plugin_version
 group = project.maven_group
 archivesBaseName = project.plugin_id
 
@@ -17,13 +19,22 @@ configurations {
 }
 
 repositories {
+	// Add repositories to retrieve artifacts from in here.
+	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
+	// for more information about repositories.
+
 	maven {
 		name = "rusherhack"
+		//releases repository will have the latest api version for last stable rusherhack release
+		//snapshots will always be the latest api version
+		//url = "https://maven.rusherhack.org/releases"
 		url = "https://maven.rusherhack.org/snapshots"
 	}
+
 	maven {
-		name = "ParchmentMC"
-		url = "https://maven.parchmentmc.org"
+		name = 'ParchmentMC'
+		url = 'https://maven.parchmentmc.org'
 	}
 }
 
@@ -31,25 +42,88 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	productionRuntime(modImplementation("net.fabricmc:fabric-loader:${project.fabric_loader_version}"))
 	productionRuntime("net.fabricmc:intermediary:${project.minecraft_version}")
-	rusherhackApi "org.rusherhack:rusherhack-api:$minecraft_version-SNAPSHOT"
+
+	//mojmap + parchment mappings
 	mappings loom.layered() {
 		officialMojangMappings()
 		parchment("org.parchmentmc.data:parchment-${project.parchment_version}@zip")
 	}
+
+	//rusherhack api
+	rusherhackApi "org.rusherhack:rusherhack-api:$minecraft_version-SNAPSHOT"
 }
 
 tasks.register('updateAccessWidener', Copy) {
 	group = "build"
 	outputs.upToDateWhen { false }
-	def accessWidenerFile = zipTree(this.project.configurations.rusherhackApi.singleFile).matching { include "rusherhack.accesswidener" }.files.iterator().next()
-	from(accessWidenerFile) into(file("build/tmp/" + this.project.minecraft_version))
+	
+	def accessWidenerFile = zipTree(this.project.configurations.rusherhackApi.singleFile).matching {
+		include "rusherhack.accesswidener"
+	}.files.iterator().next()
+	
+	println("rusherhack access widener: " + accessWidenerFile)
+	
+	from(accessWidenerFile)
+	into(file("build/tmp/" + this.project.minecraft_version))
 }
 
+tasks.register('runPlugin', JavaExec) {
+	group = "build"
+	dependsOn remapJar, downloadAssets, copyPluginToRunDir
+	classpath.from configurations.productionRuntime
+	mainClass = "net.fabricmc.loader.impl.launch.knot.KnotClient"
+	workingDir = file("run")
+
+	doFirst {
+		classpath.from loom.minecraftProvider.minecraftClientJar
+		workingDir.mkdirs()
+
+		args(
+				"--assetIndex", loom.minecraftProvider.versionInfo.assetIndex().fabricId(loom.minecraftProvider.minecraftVersion()),
+				"--assetsDir", new File(loom.files.userCache, "assets").absolutePath,
+				"--gameDir", workingDir.absolutePath
+		)
+
+		def rusherLoaderJarFile = project.layout.getProjectDirectory().file("lib/rusherhack-loader.jar").asFile
+		if (!rusherLoaderJarFile.exists()) {
+			throw new GradleException("rusherhack-loader.jar must be copied to the lib directory!")
+		}
+		def rusherLoaderJarPath = project.layout.getProjectDirectory().file("lib/rusherhack-loader.jar").asFile.absolutePath
+
+		jvmArgs(
+				"-Drusherhack.enablePlugins=true",
+				"-Dfabric.addMods=${rusherLoaderJarPath}",
+		)
+	}
+}
+
+tasks.register("copyPluginToRunDir", Copy) {
+	group = "build"
+	dependsOn remapJar
+	from remapJar.outputs
+	into file("run/rusherhack/plugins")
+}
+
+loom {
+	def accessWidenerFile = new File("build/tmp/${this.project.minecraft_version}/rusherhack.accesswidener")
+	if(accessWidenerFile.exists()) {
+		accessWidenerPath = accessWidenerFile
+	} else {
+		println("RUSHERHACK ACCESS WIDENER NOT FOUND. Please run the 'updateAccessWidener' task.")
+	}
+
+	//disable run configs
+	runConfigs.configureEach {
+		ideConfigGenerated = false
+	}
+}
 
 def targetJavaVersion = project.java_version
+
 java.sourceCompatibility = JavaLanguageVersion.of(targetJavaVersion)
 java.targetCompatibility = JavaLanguageVersion.of(targetJavaVersion)
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
+
 tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
 	it.options.release = Integer.parseInt(targetJavaVersion)
@@ -63,19 +137,28 @@ processResources {
 
 jar {
 	manifest {
-		attributes("Minecraft-Version": project.minecraft_version)
+		attributes(
+				"Minecraft-Version": project.minecraft_version
+		)
 	}
 }
+
 
 def libsDir = layout.buildDirectory.dir("libs")
 
 tasks.register("devJar", Copy) {
     group = "build"
+    description = "Create an additional jar named <archivesBaseName>-dev.jar with identical contents to remapJar"
     dependsOn tasks.named("remapJar")
-    from(tasks.named("remapJar").flatMap { it.archiveFile }) into(libsDir)
+    from(tasks.named("remapJar").flatMap { it.archiveFile })
+    into(libsDir)
     rename { _ -> "${project.archivesBaseName}-${project.plugin_version}.jar" }
 }
 
-tasks.named("build") {
-    dependsOn("devJar")
-}
+this.tasks.ideaSyncTask.dependsOn("updateAccessWidener")
+this.tasks.configureLaunch.dependsOn("updateAccessWidener")
+
+this.tasks.build.dependsOn("devJar")
+// tasks.named("build") {
+//     dependsOn("devJar")
+// }
