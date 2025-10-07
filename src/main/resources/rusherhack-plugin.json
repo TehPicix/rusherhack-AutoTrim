@@ -1,10 +1,10 @@
 {
-  "Plugin-Class": "xyz.netherite.PluginInit",
-  "Name": "AutoNetherite",
-  "Version": "${plugin_version}",
-  "Description": "Automatically upgrades diamond tools to netherite",
+  "Plugin-Class": "${project.maven_group}.Main",
+  "Name": "${project.plugin_name}",
+  "Version": "${project.plugin_version}",
+  "Description": "Automatically upgrades diamond tools to netherite and applies trims to armor in the smithing table",
   "Authors": [
-    "xyzbtw"
+    "TehPicix"
   ],
   "Minecraft-Versions": [
     "1.20.4",

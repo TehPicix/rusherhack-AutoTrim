@@ -1,0 +1,35 @@
+# .clang-format
+BasedOnStyle: LLVM
+
+# never wrap
+ColumnLimit: 0
+ReflowComments: false
+BreakStringLiterals: false
+
+# keep call args/params on one line
+BinPackArguments: true
+BinPackParameters: true
+AllowAllArgumentsOnNextLine: true
+PenaltyBreakBeforeFirstCallParameter: 1000000
+
+# your other prefs…
+UseTab: ForIndentation
+ContinuationIndentWidth: 4
+AlignAfterOpenBracket: DontAlign
+AlignOperands: false
+IndentWidth: 4
+TabWidth: 4
+MaxEmptyLinesToKeep: 1
+SeparateDefinitionBlocks: Always
+AllowShortIfStatementsOnASingleLine: true # (or: WithoutElse on newer versions)
+KeepEmptyLinesAtTheStartOfBlocks: true
+
+SortIncludes: true
+IncludeBlocks: Preserve
+
+# never keep {} on one line (forces multi-line bodies)
+AllowShortFunctionsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+
+---
+Language: Java
