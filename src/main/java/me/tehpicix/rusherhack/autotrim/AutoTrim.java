@@ -81,8 +81,6 @@ public class AutoTrim extends ToggleableModule {
 				int smithItemSlot = findItem(menu, stack -> diamondItems.contains(stack));
 				int netheriteSlot = findItem(menu, Items.NETHERITE_INGOT);
 
-				// ChatUtils.print("Template Slot: " + templateSlot + " Smith Item Slot: " + smithItemSlot + " Netherite Slot: " + netheriteSlot);
-
 				// Template slot
 				if (menu.getSlot(0).hasItem()) {
 					ItemStack slot0 = menu.getSlot(0).getItem();
@@ -186,8 +184,6 @@ public class AutoTrim extends ToggleableModule {
 			int templateSlot = findItem(menu, stack -> templates.contains(stack));
 			int smithItemSlot = findItem(menu, stack -> armorItems.contains(stack));
 			int materialSlot = findItem(menu, stack -> trimMaterials.contains(stack));
-
-			// ChatUtils.print("Template Slot: " + templateSlot + " Smith Item Slot: " + smithItemSlot + " Netherite Slot: " + materialSlot);
 
 			// Template slot
 			if (menu.getSlot(0).hasItem()) {
