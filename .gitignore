@@ -119,3 +119,9 @@ run/
 
 lib/
 bin/
+
+# eclipse
+.metadata
+.classpath
+.project
+.settings/
